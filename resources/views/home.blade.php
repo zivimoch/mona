@@ -334,14 +334,21 @@
 
         function load_tanggal() {
                 // $('#overlayListAgenda').show();
+                // filter = "month="+month+"&year="+year;
+                filter = null;
                 $.ajax({
                     type: "GET",
-                    url: "{{ env('APP_URL') }}/absen/load_tanggal/",
+                    url: "{{ env('APP_URL') }}/absen/load_tanggal?"+filter,
                     success: function (response) {
                         let hari_ini = @json(now()->toDateString());;
-                        disabled_button_masuk = disabled_button_pulang = collapsed = '';
+                        disabled_button_masuk = disabled_button_pulang = '';
 
                         response.forEach(e => {
+                        if (e.tanggal != hari_ini) {
+                            collapsed = 'collapsed-card';
+                        } else {
+                            collapsed = '';
+                        }
                         // masuk
                         if (e.tanggal_masuk != null) {
                             card_masuk = 'success';
@@ -349,9 +356,7 @@
                                         <img class="img-circle elevation-2" src="{{ asset('img') }}/absen/${e.foto_masuk}" style="max-width:58px; border-radius: 50%;">
                                         <i class="fas fa-check-circle" style="position: absolute; bottom: 5px; right: -7px; font-size: 20px;"></i>
                                     </div>`;
-                            if (e.tanggal != hari_ini) {
-                                collapsed = 'collapsed-card';
-                            } 
+
                         } else if (e.cuti == 1) {
                             card_masuk = 'warning';
                             button_masuk = `<div class="widget-user-image" onclick="input_absen('masuk', '${e.tanggal}', '${e.tanggal_masuk}') "style="margin-right: 10px; position: relative; border: 3px solid #9b9999; border-radius: 50%;">
@@ -499,14 +504,29 @@
                                 kantor_latitude = '{{ Auth::user()->kantor_latitude }}'; 
                                 kantor_longitude = '{{ Auth::user()->kantor_longitude }}'; 
                                 // lokasi sesuai gps
-                                my_latitude = '-6.190253199201834'; // nanti dihapus
-                                my_longitude = '106.90609272642648'; // nanti dihapus
-                                // my_latitude = EXIF.getTag(image, "GPSLatitude");
-                                // my_longitude = EXIF.getTag(image, "GPSLongitude");
-                                // jarak
+                                // my_latitude = '-6.190253199201834'; // nanti dihapus
+                                // my_longitude = '106.90609272642648'; // nanti dihapus
+                                var my_latitude = EXIF.getTag(image, "GPSLatitude");
+                                var my_longitude = EXIF.getTag(image, "GPSLongitude");
+                                var latitudeRef = EXIF.getTag(image, "GPSLatitudeRef"); // 'N' or 'S'
+                                var longitudeRef = EXIF.getTag(image, "GPSLongitudeRef"); // 'E' or 'W'
+
+                                // Convert latitude and longitude from DMS to decimal
+                                my_latitude = convertToDecimal(my_latitude);
+                                my_longitude = convertToDecimal(my_longitude);
+
+                                // Adjust latitude and longitude based on hemisphere
+                                if (latitudeRef === 'S') {
+                                    my_latitude = -my_latitude; // Southern Hemisphere
+                                }
+
+                                if (longitudeRef === 'W') {
+                                    my_longitude = -my_longitude; // Western Hemisphere
+                                }
+
                                 distance = hitung_jarak(kantor_latitude, kantor_longitude, my_latitude, my_longitude);
-                                if (distance > 45) {
-                                    distance_warning = '<span class="badge badge-danger jam_agenda"><i class="fas fa-times-circle"></i> Lokasi absen diluar radius (>45 m)</span><br>';
+                                if (distance > 100) {
+                                    distance_warning = '<span class="badge badge-danger jam_agenda"><i class="fas fa-times-circle"></i> Lokasi absen diluar radius (>100 m)</span><br>';
                                     $('#catatan').show();
 
                                 } else {
@@ -571,6 +591,13 @@
                 const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
                 return R * c; // Distance in meters
+            }
+
+            function convertToDecimal(gpsArray) {
+                var degrees = gpsArray[0];
+                var minutes = gpsArray[1];
+                var seconds = gpsArray[2];
+                return degrees + (minutes / 60) + (seconds / 3600);
             }
     </script>
 @endsection

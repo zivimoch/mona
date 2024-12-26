@@ -20,8 +20,8 @@ class DatabaseSeeder extends Seeder
             'name' => 'Manager Kasus',
             'email' => 'mk@moka.ol',
             'password' => '$2y$10$9BcBcEWaVUmAOrl2zZkaKeYRZaajkbtNFlAcpNTwkXDab9e00kqlq',
-            'kantor_latitude' => '-6.190168332129727',
-            'kantor_longitude' => '106.90603079940675',
+            'kantor_latitude' => '-6.190294962218336',
+            'kantor_longitude' => '106.9053795256499',
         ]);
 
         $absen = [
