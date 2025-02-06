@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ShiftRules;
 use Illuminate\Http\Request;
+// use Stevebauman\Location\Facades\Location;
 
 class HomeController extends Controller
 {
@@ -21,8 +23,10 @@ class HomeController extends Controller
      *
      * @return \Illuminate\Contracts\Support\Renderable
      */
-    public function index()
+    public function index(Request $request)
     {
-        return view('home');
+        $shift_rules = ShiftRules::get();
+        return view('home')
+                ->with('shift_rules', $shift_rules);
     }
 }

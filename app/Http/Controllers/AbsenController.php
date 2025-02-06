@@ -1,17 +1,22 @@
 <?php
 
 namespace App\Http\Controllers;
+
+use App\Models\Absen;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Exception;
+use Laravel\Ui\Presets\React;
+use Validator;
 
 class AbsenController extends Controller
 {
     public function load_tanggal(Request $request) {
         // Get the requested month and year, default to current month and year if not provided
-        $month = $request->input('month', \Carbon\Carbon::now()->month);  // Default to current month if not provided
-        $year = $request->input('year', \Carbon\Carbon::now()->year);    // Default to current year if not provided
+        $month = $request->input('bulan', \Carbon\Carbon::now()->month);  // Default to current month if not provided
+        $year = $request->input('tahun', \Carbon\Carbon::now()->year);    // Default to current year if not provided
     
         // Get the start date (first day of the requested month and year)
         $currentMonthStart = \Carbon\Carbon::createFromDate($year, $month, 1)->startOfMonth()->format('Y-m-d');
@@ -33,10 +38,17 @@ class AbsenController extends Controller
         for ($date = $startDate; $date <= $endDate; $date->modify('+1 day')) {
             $dateRange[] = $date->format('Y-m-d');
         }
+
+        if ($request->tanggal_tidak_masuk == 'sembunyikan') {
+            $tanggal_tidak_masuk = "WHERE b.tanggal_masuk IS NOT NULL OR a.date_tanggal_bulan_ini = CURRENT_DATE";
+        } else {
+            $tanggal_tidak_masuk = "";
+        }
     
         // Build the query with the list of dates
         $query = "SELECT 
                     a.date_tanggal_bulan_ini AS tanggal,
+                    b.uuid, 
                     b.tanggal_masuk, 
                     b.jam_masuk, 
                     b.foto_masuk, 
@@ -149,6 +161,7 @@ class AbsenController extends Controller
                 LEFT JOIN 
                 ( SELECT * FROM absen WHERE user_id = ".Auth::user()->id." ) 
                 b ON a.date_tanggal_bulan_ini = b.tanggal_masuk
+                ".$tanggal_tidak_masuk."
                 ORDER BY a.date_tanggal_bulan_ini DESC, b.jam_masuk DESC
             ";
     
@@ -157,16 +170,85 @@ class AbsenController extends Controller
         
         return response()->json($results);
     }
-            
+
+    public function load_detail(Request $request) {
+        $data = DB::table('absen as a')
+                    ->leftJoin('shift_rules as b', 'a.kode_shift_rules', 'b.kode')
+                    ->selectRaw('a.*, b.jam_masuk as jam_masuk_rules, b.jam_pulang as jam_pulang_rules')
+                    ->where('a.uuid', $request->uuid)
+                    ->first();
+
+        if (!$data) {
+            return null;
+        }
+
+        if ($data->jam_masuk > $data->jam_masuk_rules) {
+            // Calculate the difference in minutes between actual jam_masuk and the rules
+            $menit_telat = (strtotime($data->jam_masuk) - strtotime($data->jam_masuk_rules)) / 60;
     
-
-    // panggil detail absen per tanggal
-    public function load_detail() {
-        
+            if ($menit_telat > 60) {
+                // Max penalty: extend jam_pulang by 60 minutes
+                $jam_pulang_fleksi = date('H:i:s', strtotime($data->jam_pulang_rules) + 3600);
+            } else {
+                // Add lateness penalty to jam_pulang
+                $jam_pulang_fleksi = date('H:i:s', strtotime($data->jam_pulang_rules) + ($menit_telat * 60));
+            }
+    
+            // Append calculated fields to the data
+            $data->jam_pulang_fleksi = $jam_pulang_fleksi;
+        } else {
+            // No lateness
+            $data->jam_pulang_fleksi = $data->jam_pulang_rules;
+        }
+    
+        return response()->json($data);
     }
+    
+            
+   /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function store(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                ]);
+                if ($validator->fails())
+                {
+                    throw new Exception($validator->errors());
+                }
+                
+                $data = [
+                    'user_id' => Auth::user()->id, 
+                    'kantor_latitude' => Auth::user()->kantor_latitude, 
+                    'kantor_longitude' => Auth::user()->kantor_longitude,
+                    'tanggal_' . $request->tipe => now()->toDateString(), // Current date (YYYY-MM-DD)
+                    'jam_' . $request->tipe => now()->toTimeString(),    // Current time (HH:MM:SS)
+                    $request->tipe . '_latitude' => $request->my_latitude,
+                    $request->tipe . '_longitude' => $request->my_longitude,
+                    'foto_' . $request->tipe => $request->foto,
+                    'catatan_' . $request->tipe => $request->catatan,
+                    'jarak_' . $request->tipe => $request->jarak,
+                ];
 
-    // panggil detail agenda per tanggal
-    public function load_agenda() {
-        
+                if ($request->tipe == 'masuk') {
+                    $data['kode_shift_rules'] = $request->shift;
+                }
+                
+                $proses = Absen::updateOrCreate(['uuid' => $request->uuid], $data);
+                
+            //return response
+            return response()->json([
+                'success' => true,
+                'code'    => 200,
+                'message' => 'Data Berhasil Disimpan!'
+            ]);
+        } catch (Exception $e){
+            return response()->json(['message' => $e->getMessage()]);
+            die();
+        }
     }
 }

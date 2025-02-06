@@ -5,8 +5,13 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="csrf-token" content="{{ csrf_token() }}">
-  <title>AdminLTE 3 | Fixed Sidebar</title>
+  <title>MONA | Monitoring Absen</title>
+<link rel="shortcut icon" href="{{ asset('icons') }}/icon-96x96.png"" >
 
+  <!-- PWA  -->
+  <meta name="theme-color" content="#6777ef"/>
+  <link rel="apple-touch-icon" href="{{ asset('logo.png') }}">
+  <link rel="manifest" href="{{ asset('/manifest.json') }}">
   <!-- Google Font: Source Sans Pro -->
   <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700&display=fallback">
   <!-- Font Awesome -->
@@ -17,6 +22,24 @@
   <link rel="stylesheet" href="{{ asset('adminlte') }}/dist/css/adminlte.min.css">
 
   <link rel="stylesheet" href="{{ asset('adminlte') }}/plugins/icheck-bootstrap/icheck-bootstrap.min.css">
+  <style>
+    #tabelRekap_wrapper {
+      display: flex;
+      align-items: center; /* Center elements vertically */
+      justify-content: space-between;
+      flex-wrap: wrap; /* Allow wrapping if space is tight */
+    }
+  
+    #tabelRekap_wrapper .dt-buttons {
+      display: flex;
+      align-items: center; /* Ensure buttons are vertically centered */
+    }
+  
+    #tabelRekap_wrapper .dataTables_filter {
+      display: flex;
+      align-items: center; /* Center search box vertically */
+    }
+  </style>
 </head>
 
 <!-- jQuery -->
@@ -27,6 +50,8 @@
 <script src="{{ asset('adminlte') }}/plugins/overlayScrollbars/js/jquery.overlayScrollbars.min.js"></script>
 <!-- AdminLTE App -->
 <script src="{{ asset('adminlte') }}/dist/js/adminlte.min.js"></script>
+<!-- Sweet Alert -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <body class="hold-transition sidebar-mini layout-fixed">
 <!-- Site wrapper -->
@@ -40,6 +65,11 @@
       </li>
     </ul>
     <b style="font-size:20px">MONA</b>
+    <ul class="navbar-nav ml-auto">
+      <li class="nav-item">
+        <button id="installBtn" type="button" class="nav-link btn btn-block btn-dark btn-xs" style="color: #fff; display:none"><i class="fas fa-download"></i> Install</button>
+      </li>
+    </ul>
   </nav>
   <!-- /.navbar -->
 
@@ -50,10 +80,10 @@
       <!-- Sidebar user (optional) -->
       <div class="user-panel mt-3 pb-3 mb-3 d-flex">
         <div class="image">
-          <img src="{{ asset('adminlte') }}/dist/img/user2-160x160.jpg" class="img-circle elevation-2" alt="User Image">
+          <img src="{{ asset('img') }}/user.jpg" class="img-circle elevation-2" alt="User Image">
         </div>
         <div class="info">
-          <a href="#" class="d-block">Alexander Pierce</a>
+          <a href="#" class="d-block">{{ Auth::user()->name }}</a>
         </div>
       </div>
       @include('layouts.sidebar')
@@ -70,21 +100,33 @@
 
   <footer class="main-footer">
     <div class="float-right d-none d-sm-block">
-      <b>Version</b> 3.2.0
+      <b>Version</b> 2.0
     </div>
-    <strong>Copyright &copy; 2014-2021 <a href="https://adminlte.io">AdminLTE.io</a>.</strong> All rights reserved.
+    <strong>Copyright &copy; 2024 <a href="https://hmokapppa.jakarta.go.id">MONA</a>.</strong> All rights reserved.
   </footer>
 
-  <!-- Control Sidebar -->
-  <aside class="control-sidebar control-sidebar-dark">
-    <!-- Control sidebar content goes here -->
-  </aside>
-  <!-- /.control-sidebar -->
 </div>
 <!-- ./wrapper -->
 <!-- AdminLTE for demo purposes -->
 
 {{-- Button bulat --}}
 {{-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous"> --}}
+<script src="{{ asset('/sw.js') }}"></script>
+<script>
+   if ("serviceWorker" in navigator) {
+      // Register a service worker hosted at the root of the
+      // site using the default scope.
+      navigator.serviceWorker.register("/sw.js").then(
+      (registration) => {
+         console.log("Service worker registration succeeded:", registration);
+      },
+      (error) => {
+         console.error(`Service worker registration failed: ${error}`);
+      },
+    );
+  } else {
+     console.error("Service workers are not supported.");
+  }
+</script>
 </body>
 </html>
