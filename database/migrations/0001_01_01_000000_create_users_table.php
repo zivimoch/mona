@@ -21,6 +21,9 @@ return new class extends Migration
             $table->string('password');
             $table->string('kantor_latitude')->nullable();
             $table->string('kantor_longitude')->nullable();
+            $table->text('alamat')->nullable();
+            $table->char('no_telp')->nullable();
+            $table->integer('sisa_cuti')->default(12);
             $table->rememberToken();
             $table->timestamps();
             $table->dateTime('deleted_at')->nullable();

@@ -11,14 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('shift_rules', function (Blueprint $table) {
+        Schema::create('log_activities', function (Blueprint $table) {
             $table->id();
             $table->string('uuid');
-            $table->integer('urutan')->nullable();
-            $table->integer('kode');
-            $table->string('judul');
-            $table->time('jam_masuk')->nullable();
-            $table->time('jam_pulang')->nullable();
+            $table->text('message');
+            $table->char('ip')->nullable();
+            $table->string('browser')->nullable();
+            $table->string('device')->nullable();
+            $table->integer('created_by')->nullable();
             $table->timestamps();
             $table->dateTime('deleted_at')->nullable();
         });
@@ -29,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('shift_rules');
+        Schema::dropIfExists('log_activities');
     }
 };

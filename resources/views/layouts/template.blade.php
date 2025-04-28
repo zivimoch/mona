@@ -20,22 +20,24 @@
   <link rel="stylesheet" href="{{ asset('adminlte') }}/plugins/overlayScrollbars/css/OverlayScrollbars.min.css">
   <!-- Theme style -->
   <link rel="stylesheet" href="{{ asset('adminlte') }}/dist/css/adminlte.min.css">
+  <!-- daterange picker -->
+  <link rel="stylesheet" href="{{ asset('adminlte') }}/plugins/daterangepicker/daterangepicker.css">
 
   <link rel="stylesheet" href="{{ asset('adminlte') }}/plugins/icheck-bootstrap/icheck-bootstrap.min.css">
   <style>
-    #tabelRekap_wrapper {
+    .dataTables_wrapper {
       display: flex;
       align-items: center; /* Center elements vertically */
       justify-content: space-between;
       flex-wrap: wrap; /* Allow wrapping if space is tight */
     }
   
-    #tabelRekap_wrapper .dt-buttons {
+    .dataTables_wrapper .dt-buttons {
       display: flex;
       align-items: center; /* Ensure buttons are vertically centered */
     }
   
-    #tabelRekap_wrapper .dataTables_filter {
+    .dataTables_wrapper .dataTables_filter {
       display: flex;
       align-items: center; /* Center search box vertically */
     }
@@ -52,6 +54,12 @@
 <script src="{{ asset('adminlte') }}/dist/js/adminlte.min.js"></script>
 <!-- Sweet Alert -->
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- InputMask -->
+<script src="{{ asset('adminlte') }}/plugins/moment/moment.min.js"></script>
+<script src="{{ asset('adminlte') }}/plugins/inputmask/jquery.inputmask.min.js"></script>
+<!-- date-range-picker -->
+<script src="{{ asset('adminlte') }}/plugins/daterangepicker/daterangepicker.js"></script>
+<script src="{{ asset('source/js/validation.js') }}"></script>
 
 <body class="hold-transition sidebar-mini layout-fixed">
 <!-- Site wrapper -->
@@ -127,6 +135,13 @@
   } else {
      console.error("Service workers are not supported.");
   }
+
+  function modal_error(text) {
+                Swal.fire({
+                        icon: "error",
+                        title: text,
+                        });
+            }
 </script>
 </body>
 </html>

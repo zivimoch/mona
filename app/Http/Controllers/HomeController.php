@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\ShiftRules;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth as FacadesAuth;
+
 // use Stevebauman\Location\Facades\Location;
 
 class HomeController extends Controller
@@ -25,8 +28,13 @@ class HomeController extends Controller
      */
     public function index(Request $request)
     {
-        $shift_rules = ShiftRules::get();
-        return view('home')
+        $shift_rules = ShiftRules::orderBy('urutan')->get();
+        if (Auth::user()->jabatan == 'Sekretariat') {
+            $view = 'rekap.absen';
+        } else {
+            $view = 'home';
+        }
+        return view($view)
                 ->with('shift_rules', $shift_rules);
     }
 }

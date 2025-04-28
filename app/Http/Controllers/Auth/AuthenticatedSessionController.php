@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Helpers\LogActivityHelper;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
@@ -27,6 +28,18 @@ class AuthenticatedSessionController extends Controller
         $request->authenticate();
 
         $request->session()->regenerate();
+
+        if (isset(Auth::user()->id)) {
+            LogActivityHelper::push_log(
+                //message
+                Auth::user()->name.' berhasil login',
+            );
+        } else {
+            LogActivityHelper::push_log(
+                //message
+                Auth::user()->name.' gagal login',
+            );
+        }
 
         return redirect()->intended(route('home', absolute: false));
     }

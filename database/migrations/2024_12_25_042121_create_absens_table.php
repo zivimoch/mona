@@ -15,11 +15,14 @@ return new class extends Migration
             $table->id();
             $table->string('uuid');
             $table->integer('user_id');
+            $table->enum('kategori', ['masuk', 'cuti'])->default('masuk');
+            $table->integer('catatan_id')->nullable();
             $table->string('kantor_latitude')->nullable();
             $table->string('kantor_longitude')->nullable();
-            $table->integer('kode_shift_rules');
+            $table->integer('kode_shift_rules')->nullable();
             $table->date('tanggal_masuk')->nullable();
             $table->time('jam_masuk')->nullable();
+            $table->char('menit_telat')->nullable();
             $table->string('masuk_latitude')->nullable();
             $table->string('masuk_longitude')->nullable();
             $table->string('foto_masuk')->nullable();
