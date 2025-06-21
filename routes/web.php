@@ -19,6 +19,7 @@ Route::middleware('auth')->group(function () {
     Route::get('absen/load_agenda', [AbsenController::class, 'load_agenda'])->name('absen.load_agenda');
     Route::post('absen/store_perbaikan/', [AbsenController::class, 'store_perbaikan'])->name('absen.store_perbaikan');
     Route::get('absen/load_perbaikan', [AbsenController::class, 'load_perbaikan'])->name('absen.load_perbaikan');
+    Route::get('absen/perbaikan', [AbsenController::class, 'perbaikan'])->name('absen.perbaikan');
     Route::get('rekap/detail_user', [RekapController::class, 'detail_user'])->name('rekap.detail_user');
     Route::get('rekap/load_detail_user', [RekapController::class, 'load_detail_user'])->name('rekap.load_detail_user');
     Route::get('rekap/load_rekap', [RekapController::class, 'load_rekap'])->name('rekap.load_rekap');

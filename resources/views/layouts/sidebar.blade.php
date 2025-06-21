@@ -2,13 +2,14 @@
     <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
         <!-- Add icons to the links using the .nav-icon class
             with font-awesome or any other icon font library -->
-        <li class="nav-item">
-            <a href="{{ env('APP_URL') }}" class="nav-link">
-                <i class="nav-icon fas fa-home"></i>
-                <p>Home</p>
-            </a>
-        </li>
+        
         @if (in_array(Auth::user()->jabatan, ['Advokat','Paralegal','Psikolog','Konselor','Tenaga Ahli', 'Unit Reaksi Cepat', 'Manajer Kasus', 'Pendamping Kasus','Penerima Pengaduan']))
+            <li class="nav-item">
+                <a href="{{ env('APP_URL') }}" class="nav-link active">
+                    <i class="nav-icon fas fa-camera"></i>
+                    <p>Absen</p>
+                </a>
+            </li>
             <li class="nav-item">
                 <a href="#" class="nav-link" onclick="modal_error('Fitur belum tersedia')">
                 <i class="nav-icon far fa-circle text-info"></i>
@@ -46,6 +47,29 @@
                 </a>
             </li>
         @else
+            <li class="nav-item">
+                <a href="#" class="nav-link active">
+                <i class="nav-icon fas fa-camera"></i>
+                <p>
+                    Absen
+                    <i class="right fas fa-angle-left"></i>
+                </p>
+                </a>
+                <ul class="nav nav-treeview">
+                <li class="nav-item">
+                    <a href="{{ env('APP_URL') }}" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Monitoring Absen</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('absen.perbaikan') }}" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Perbaikan Absen</p>
+                    </a>
+                </li>
+                </ul>
+            </li>
             <li class="nav-item">
                 <a href="{{ route('cuti') }}" class="nav-link">
                 <i class="nav-icon far fa-circle text-warning"></i>

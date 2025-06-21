@@ -272,6 +272,25 @@ class AbsenController extends Controller
                 );
                 
                 $proses = Absen::updateOrCreate(['uuid' => $uuid], $data);
+
+                // insert permohonan jika mengajukan 
+                if ($request->catatan_absen) {
+                    $data_perbaikan = [
+                        'absen_id' => $proses->id, 
+                        'user_id' => Auth::user()->id, 
+                        'tipe_absen' => $request->tipe, 
+                        'tipe_perbaikan' => json_encode($request->tipe_perbaikan_absen), 
+                        'alasan' => $request->catatan_absen
+                    ];
+
+                    if (in_array('jam', $request->tipe_perbaikan_absen)) { 
+                        $data_perbaikan['jam_sebelumnya'] = $proses->{'jam_' . $request->tipe};
+                    }
+                    if (in_array('jarak', $request->tipe_perbaikan_absen)) { 
+                        $data_perbaikan['jarak_sebelumnya'] = $proses->{'jarak_' . $request->tipe};
+                    }
+                    $proses = PerbaikanAbsen::create($data_perbaikan);
+                }
             //return response
             return response()->json([
                 'success' => true,
@@ -372,5 +391,9 @@ class AbsenController extends Controller
         $absen = Absen::where('id', $data->absen_id)->first();
         $data->uuid_absen = $absen->uuid;
         return response()->json($data);
+    }
+
+    public function perbaikan() {
+        return view('rekap.perbaikan');
     }
 }

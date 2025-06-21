@@ -93,7 +93,6 @@ class RekapController extends Controller
         ->leftJoin('perbaikan_absen as d', 'd.absen_id', '=', 'b.id')
         ->whereYear('b.tanggal_masuk', '=', $request->tahun)
         ->whereMonth('b.tanggal_masuk', '=', $request->bulan)
-        ->where('b.user_id', '=', $user->id)
         ->groupBy(
             'b.id', 
             'a.name', 
@@ -108,8 +107,15 @@ class RekapController extends Controller
             'b.catatan_masuk', 
             'b.catatan_pulang',
             'b.menit_telat'
-        )
-        ->get();
+        );
+        if (isset($request->user_id)) {
+            // untuk melihat detail absen user
+            $datas = $datas->where('b.user_id', '=', $user->id);
+        } else {
+            // untuk melihat perbaikan absen
+            $datas = $datas->whereNotNull('d.absen_id')->orderBy('b.id', 'desc');
+        }
+        $datas = $datas->get();
     
         return DataTables::of($datas)->make(true);
     }

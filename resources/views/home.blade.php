@@ -132,6 +132,32 @@
                     <input type="hidden" id="uuid">
                     <input type="hidden" id="tipe">
                     <input type="hidden" id="jarak">
+
+                    <div class="col-12" id="accordion-one" style="padding:0px !important">
+                        <div class="card card-primary">
+                          <a class="d-block w-100" data-toggle="collapse" href="#collapseOne">
+                            <div class="card-header p-0">
+                                <div class="btn btn-block btn-outline-primary rounded-0 mb-0">
+                                    <span>Buat Permohonan Perbaikan Absen</span>
+                                  </div>
+                            </div>
+                          </a>
+                          <div id="collapseOne" class="collapse" data-parent="#accordion-one">
+                            <div class="card-body">
+                                <div class="form-group"> 
+                                    <label>Tipe Perbaikan : </label>
+                                    <div class="icheck-primary d-inline d-flex"><input type="checkbox" id="perbaikan_jam_absen" name="tipe_perbaikan_absen[]" value="jam"><label for="perbaikan_jam_absen">Jam  <span class="tipe_absen_html"></label></div>
+                                    <div class="icheck-primary d-inline d-flex"><input type="checkbox" id="perbaikan_jarak_absen" name="tipe_perbaikan_absen[]" value="jarak"><label for="perbaikan_jarak_absen">Jarak  <span class="tipe_absen_html"></label></div>
+                                </div>
+                                <div class="form-group"> 
+                                    <label>Alasan : </label>
+                                    <input id="catatan_absen" type="text" class="form-control" placeholder="Tulis alasan sejelas-jelasnya">
+                                </div>
+                                <span style="color: red">*Setelah Submit, silahkan informasikan PIC Absen di Sekretariat untuk menyetujui Permohonan Perbaikan Absen.</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                    
                     {{-- <input type="" id="my_latitude">
                     <input type="" id="my_longitude"> --}}
@@ -178,8 +204,8 @@
                                 <div class="card-body">
                                     <div class="form-group"> 
                                         <label>Tipe Perbaikan : </label>
-                                        <div class="icheck-primary d-inline d-flex"><input type="checkbox" id="perbaikan_jam" name="tipe_perbaikan[]" value="jam"><label for="perbaikan_jam">Jam Masuk</label></div>
-                                        <div class="icheck-primary d-inline d-flex"><input type="checkbox" id="perbaikan_jarak" name="tipe_perbaikan[]" value="jarak"><label for="perbaikan_jarak">Jarak Masuk</label></div>
+                                        <div class="icheck-primary d-inline d-flex"><input type="checkbox" id="perbaikan_jam" name="tipe_perbaikan[]" value="jam"><label for="perbaikan_jam">Jam <span class="tipe_absen_html"></span></label></div>
+                                        <div class="icheck-primary d-inline d-flex"><input type="checkbox" id="perbaikan_jarak" name="tipe_perbaikan[]" value="jarak"><label for="perbaikan_jarak">Jarak <span class="tipe_absen_html"></label></div>
                                     </div>
                                     <div class="form-group"> 
                                         <label>Alasan : </label>
@@ -593,6 +619,10 @@
                         my_latitude: $("#my_latitude").val(),
                         my_longitude: $("#my_longitude").val(),
                         jarak: $("#jarak").val(),
+                        tipe_perbaikan_absen: $("input[name='tipe_perbaikan_absen[]']:checked").map(function() {
+                                    return this.value;
+                                    }).get(),
+                        catatan_absen: $("#catatan_absen").val(),
                         _token: token
                     },
                     success: function (response){
@@ -661,6 +691,8 @@
                             $('#tipe').val('pulang');
                             $('#shift').hide();
                         }
+                        
+                        $(".tipe_absen_html").html(tipe);
                     }
                 }
                 });
@@ -705,7 +737,7 @@
                         if (tipe=='masuk') {
                             $('#detail_absen').append("Telat : " + response.menit_telat + " menit<br>");
                         }
-
+                        $('.tipe_absen_html').html(tipe);
                         // bersihkan inputan perbaikan
                         $("input[name='tipe_perbaikan[]']").prop('checked', false); 
                         $('#catatan').val('');
