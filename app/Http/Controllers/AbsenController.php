@@ -275,12 +275,28 @@ class AbsenController extends Controller
 
                 // insert permohonan jika mengajukan 
                 if ($request->catatan_absen) {
+                    // cek dulu apakah submit setelah 2 jam dari rules (rulse masuk maupun keluar)
+                    $shift = ShiftRules::where('kode', $absen->kode_shift_rules)->first();
+                    $batas_waktu = null;
+                    if ($request->tipe == 'masuk') {
+                        $batas_waktu = Carbon::parse($absen->tanggal_masuk . ' ' . $shift->jam_masuk)->addHours(1.5);
+                    } else {
+                        $batas_waktu = Carbon::parse($absen->tanggal_pulang . ' ' . $shift->jam_pulang)->addHours(2);
+                    }
+
+                    if (now()->greaterThan($batas_waktu)) {
+                        return response()->json([
+                            'status' => 'error',
+                            'message' => 'Perbaikan absen sudah melewati batas waktu pengajuan ('.($request->tipe == 'masuk' ? '1.5' : '2').' jam setelah jam absen sesuai aturan).'
+                        ], 422);
+                    }
+                    
                     $data_perbaikan = [
                         'absen_id' => $proses->id, 
                         'user_id' => Auth::user()->id, 
                         'tipe_absen' => $request->tipe, 
                         'tipe_perbaikan' => json_encode($request->tipe_perbaikan_absen), 
-                        'alasan' => $request->catatan_absen
+                        'alasan' => preg_replace('/[\x{1F000}-\x{1FFFF}]/u', '', $request->catatan_absen)
                     ];
 
                     if (in_array('jam', $request->tipe_perbaikan_absen)) { 
@@ -332,14 +348,30 @@ class AbsenController extends Controller
 
                 if ($request->disetujui == null) {
                     // untuk submit user
+
+                    // cek dulu apakah submit setelah 2 jam dari rules (rulse masuk maupun keluar)
+                    $shift = ShiftRules::where('kode', $absen->kode_shift_rules)->first();
+                    $batas_waktu = null;
+                    if ($request->tipe_absen == 'masuk') {
+                        $batas_waktu = Carbon::parse($absen->tanggal_masuk . ' ' . $shift->jam_masuk)->addHours(1.5);
+                    } else {
+                        $batas_waktu = Carbon::parse($absen->tanggal_pulang . ' ' . $shift->jam_pulang)->addHours(2);
+                    }
+                    if (now()->greaterThan($batas_waktu)) {return response()->json([
+                            'status' => 'error',
+                            'message' => 'Perbaikan absen sudah melewati batas waktu pengajuan ('.($request->tipe_absen == 'masuk' ? '1.5' : '2').' jam setelah jam absen sesuai aturan).'
+                        ], 422);
+                    }
+                    
                     $data = [
                         'absen_id' => $absen->id, 
                         'user_id' => Auth::user()->id, 
                         'tipe_absen' => $request->tipe_absen, 
                         'tipe_perbaikan' => json_encode($request->tipe_perbaikan), 
-                        'alasan' => $request->catatan
+                        'alasan' => $request->catatan,
+                        'link_surat_tugas' => $request->link_surat_tugas_absen
                     ];
-
+                    
                     if (in_array('jam', $request->tipe_perbaikan)) { 
                         $data['jam_sebelumnya'] = $absen->{'jam_' . $request->tipe_absen};
                     }
@@ -347,6 +379,9 @@ class AbsenController extends Controller
                         $data['jarak_sebelumnya'] = $absen->{'jarak_' . $request->tipe_absen};
                     }
                 } else {
+                    if (Auth::user()->jabatan != 'Sekretariat') {
+                        abort(403, 'Unauthorized action.');
+                    }
                     // untuk approval sekretariat
                     $data = [
                         'disetujui' => $request->disetujui,
@@ -395,5 +430,27 @@ class AbsenController extends Controller
 
     public function perbaikan() {
         return view('rekap.perbaikan');
+    }
+
+    function destroy(Request $request)
+    {
+        try {
+            $absen = Absen::where('uuid', $request->uuid)->first();
+            if ($absen == null) {
+                throw new Exception('Data tidak ditemukan!');
+            }
+
+            $absen->delete();
+
+            return response()->json([
+                'success' => true,
+                'code'    => 200,
+                'message' => 'Data Berhasil Dihapus!'
+            ]);
+        } catch (Exception $e){
+            return response()->json(['message' => $e->getMessage()]);
+            die();
+        }
+        
     }
 }

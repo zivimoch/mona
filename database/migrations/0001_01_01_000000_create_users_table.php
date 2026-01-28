@@ -18,6 +18,8 @@ return new class extends Migration
             $table->string('email', 191)->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->enum('jabatan', ['Super Admin', 'Penerima Pengaduan', 'Manajer Kasus', 'Pendamping Kasus', 'Psikolog', 'Konselor', 'Advokat', 'Paralegal', 'Unit Reaksi Cepat', 'Supervisor Kasus', 'Tenaga Ahli', 'Sekretariat', 'Kepala Instansi', 'Tim Data']);
+            $table->string('wilayah');
+            $table->enum('penempatan', ['pusat', 'pos'])->default('pusat');
             $table->string('password');
             $table->string('kantor_latitude')->nullable();
             $table->string('kantor_longitude')->nullable();

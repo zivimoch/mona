@@ -21,6 +21,7 @@ return new class extends Migration
             $table->time('jam_sebelumnya')->comment('jika kosong berarti tipe perbaikan bukan jam')->nullable();
             $table->string('jarak_sebelumnya')->comment('jika kosong berarti tipe perbaikan bukan jarak')->nullable();
             $table->string('alasan');
+            $table->string('link_surat_tugas')->nullable();
             $table->boolean('disetujui')->nullable();
             $table->string('keterangan_pic')->nullable();
             $table->timestamps();

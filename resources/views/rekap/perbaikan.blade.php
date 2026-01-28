@@ -37,6 +37,7 @@
           <th>Jam Pulang</th>
           <th>Jarak Pulang</th>
           <th>Terlambat (menit)</th>
+          <th>Alasan Perbaikan</th>
           <th>Perbaikan</th>
           {{-- <th>Catatan Pulang</th> --}}
         </tr>
@@ -56,6 +57,7 @@
           <th>Jam Pulang</th>
           <th>Jarak Pulang</th>
           <th>Terlambat (menit)</th>
+          <th>Alasan Perbaikan</th>
           <th>Perbaikan</th>
               {{-- <th>Catatan Pulang</th> --}}
         </tr>
@@ -126,6 +128,7 @@
                         <span id="jam_sebelumnya"></span> <br>
                         <span id="jarak_sebelumnya"></span><br>
                         Alasan : <span id="alasan"></span> <br>
+                        Link Surat Tugas : <span id="link_surat_tugas"></span> <br>
                         Status : <span id="disetujui"></span><br>
                         Keterangan Sekretariat : <span id="keterangan_pic_html"></span><br>
                         <br>
@@ -219,6 +222,7 @@
                 {"data": "jarak_pulang"},
                 // {"data": "catatan_pulang"},
                 {"data": "menit_terlambat"},
+                {"data": "alasan"},
                 {
                     "data": "perbaikans",
                     "render": function (data, type, row, meta) {
@@ -330,6 +334,11 @@
                     $('#jarak_sebelumnya').html('Jarak Sebelumnya : Tidak Dirubah');
                 }
                 $('#alasan').html(response.alasan);
+                if (response.link_surat_tugas) {
+                    $('#link_surat_tugas').html('<a href="'+response.link_surat_tugas+'" target="_blank">'+response.link_surat_tugas+'</a>');
+                } else {
+                    $('#link_surat_tugas').html('-');
+                }
                 $('#tipe_absen').html(response.tipe_absen);
                 $('#keterangan_pic_html').html(response.keterangan_pic);
                 $('#perbaikan').modal('show');

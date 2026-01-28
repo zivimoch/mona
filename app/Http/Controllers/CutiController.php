@@ -170,10 +170,10 @@ class CutiController extends Controller
 
     // API
     function get_user_cuti(Request $request) {
-        $token = $request->header('Authorization');
-        if ($token !== 'Bearer ' . config('app.api_secret')) {
-            return response()->json(['message' => 'Unauthorized'], 401);
-        }
+        // $token = $request->header('Authorization');
+        // if ($token !== 'Bearer ' . config('app.api_secret')) {
+        //     return response()->json(['message' => 'Unauthorized'], 401);
+        // }
 
         $data = DB::table('absen as a')
                     ->leftJoin('users as b', 'a.user_id', 'b.id')
@@ -209,8 +209,8 @@ class CutiController extends Controller
         if ($data->tandatangan1 && $data->tandatangan2) {
             $datas['tandatangan3'] = 'buyuni.png';
             $datas['nama_penandatangan3'] = 'Yuni';
-            $datas['tandatangan4'] = 'buyuni.png';
-            $datas['nama_penandatangan4'] = 'Yuni';
+            $datas['tandatangan4'] = 'buayu.png';
+            $datas['nama_penandatangan4'] = 'Rahayu Sri Rahmawati';
             Cuti::updateOrCreate(['uuid' => $data->uuid], $datas);
         }
 

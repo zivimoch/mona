@@ -26,7 +26,13 @@
         <div class="row">
         <div class="col-md-3">
             <div class="alert alert-info alert-dismissible">
-                <h5 id="total_hari">x</h5>
+                <h5 id="rata_menit_hadir">x Menit</h5>
+                Rata-Rata Menit Hadir per Hari
+              </div>
+        </div>
+        <div class="col-md-3">
+            <div class="alert alert-info alert-dismissible">
+                <h5 id="total_hari">x Hari</h5>
                 Jumlah Hari Kerja
               </div>
         </div>
@@ -65,6 +71,7 @@
           {{-- <th>Catatan Pulang</th> --}}
           <th>Terlambat (menit)</th>
           <th>Perbaikan</th>
+          <th>Alasan Perbaikan</th>
         </tr>
         </thead>
         <tbody>
@@ -84,6 +91,7 @@
               {{-- <th>Catatan Pulang</th> --}}
               <th>Terlambat (menit)</th>
               <th>Perbaikan</th>
+            <th>Alasan Perbaikan</th>
         </tr>
         </tfoot>
       </table>
@@ -270,7 +278,8 @@
                         }
 
                     }
-                }
+                },
+                {"data": "alasan"}
             ],
             "pageLength": 25,
             "lengthMenu": [
@@ -298,7 +307,8 @@
             type: "GET",
             url: "{{ env('APP_URL') }}/rekap/load_rekap?uuid={{ request()->user_id }}&bulan=" + bulan + "&tahun=" + tahun,
             success: function (response) {
-                $('#total_hari').html(response.total_hari);
+                $('#rata_menit_hadir').html(response.rata_menit_hadir+ " Menit ("+ Math.floor(response.rata_menit_hadir/60)+" Jam)");
+                $('#total_hari').html(response.total_hari + " Hari");
                 $('#total_menit_telat').html(response.total_menit_telat+" Menit ("+ Math.floor(response.total_menit_telat/480)+" Hari)");
                 $('#diluar_radius').html(response.diluar_radius+" Kali");
                 $('#tidak_absen_pulang').html(response.tidak_absen_pulang+" Kali");
@@ -360,7 +370,7 @@
                 $('#keterangan_pic_html').html(response.keterangan_pic);
                 $('#perbaikan').modal('show');
 
-                if (response.disetujui == null) {
+                if (response.disetujui == null && {{ auth()->user()->jabatan }} == 'Sekretariat') {
                     $('#formpersetujuan').show();
                 } else {
                     $('#formpersetujuan').hide();

@@ -133,7 +133,7 @@
                     <input type="hidden" id="tipe">
                     <input type="hidden" id="jarak">
 
-                    <div class="col-12" id="accordion-one" style="padding:0px !important">
+                    {{-- <div class="col-12" id="accordion-one" style="padding:0px !important">
                         <div class="card card-primary">
                           <a class="d-block w-100" data-toggle="collapse" href="#collapseOne">
                             <div class="card-header p-0">
@@ -153,11 +153,16 @@
                                     <label>Alasan : </label>
                                     <input id="catatan_absen" type="text" class="form-control" placeholder="Tulis alasan sejelas-jelasnya">
                                 </div>
+                                <div class="form-group"> 
+                                    <label>Link Surat Tugas : </label>
+                                    <input id="link_surat_tugas_absen" type="url" class="form-control" placeholder="Link Surat tugas memperkuat permohonan perbaikan absen (jika ada)">
+                                </div>
+                                *Perbaikan lewat jam waktu ditentukan tidak akan tersimpan <br>
                                 <span style="color: red">*Setelah Submit, silahkan informasikan PIC Absen di Sekretariat untuk menyetujui Permohonan Perbaikan Absen.</span>
                             </div>
                           </div>
                         </div>
-                      </div>
+                      </div> --}}
                    
                     {{-- <input type="" id="my_latitude">
                     <input type="" id="my_longitude"> --}}
@@ -211,14 +216,21 @@
                                         <label>Alasan : </label>
                                         <input id="catatan" type="text" class="form-control" placeholder="Tulis alasan sejelas-jelasnya">
                                     </div>
+                                    <div class="form-group"> 
+                                        <label>Link Surat Tugas : </label>
+                                        <input id="link_surat_tugas_absen" type="link" class="form-control" placeholder="Link Surat tugas memperkuat permohonan perbaikan absen (jika ada)">
+                                    </div>
                                     <input type="hidden" id="uuid_absen">
                                     <input type="hidden" id="tipe_absen">
                                     <span style="color: red">*Setelah Submit, silahkan informasikan PIC Absen di Sekretariat untuk menyetujui Permohonan Perbaikan Absen.</span>
+                                    <br>
+                                    <span id="max_perbaikan"></span>
                                     <button id="simpan_perbaikan" type="button" class="btn btn-block btn-primary">Submit</button>
                                 </div>
                               </div>
                             </div>
                           </div>
+                        <button onclick="hapusSubmit()" type="button" class="btn btn-block btn-danger">Hapus Absen Masuk & Pulang ini</button>
                     </div>
                 </div>
         </div>
@@ -481,7 +493,7 @@
                         jam_masuk = e.jam_masuk;
                     } else if (e.kategori == 'cuti') {
                         card_masuk = 'warning';
-                        button_masuk = `<div class="widget-user-image" onclick="input_absen('masuk', '${e.tanggal}', '${e.tanggal_masuk}', '${e.uuid}') "style="margin-right: 10px; position: relative; border: 3px solid #9b9999; border-radius: 50%;">
+                        button_masuk = `<div class="widget-user-image" onclick="alert('Saat cuti tidak dapat absen')" style="margin-right: 10px; position: relative; border: 3px solid #9b9999; border-radius: 50%;">
                                     <button type="button" class="btn bg-gradient-success p-2 rounded-circle btn-xs disabled"><i class="fas fa-plus" style="margin:0px 5px; font-size:35px; color:#ffffff"></i></button>
                                 </div>`;
                         jam_masuk = "CUTI";
@@ -516,7 +528,7 @@
                                 </div>`;
                     } else if (e.kategori == 'cuti') {
                         card_pulang = 'warning';
-                        button_pulang = `<div class="widget-user-image" onclick="input_absen('pulang', '${e.tanggal}', '${e.tanggal_masuk}', '${e.uuid}')" style="margin-right: 10px; position: relative; border: 3px solid #9b9999; border-radius: 50%;">
+                        button_pulang = `<div class="widget-user-image" onclick="alert('Saat cuti tidak dapat absen')" style="margin-right: 10px; position: relative; border: 3px solid #9b9999; border-radius: 50%;">
                                     <button type="button" class="btn bg-gradient-success p-2 rounded-circle btn-xs disabled"><i class="fas fa-plus" style="margin:0px 5px; font-size:35px; color:#ffffff"></i></button>
                                 </div>`;
                     } else {
@@ -532,7 +544,7 @@
                     }
 
                     var html = `
-                        <div class="card ${collapsed}">
+                        <div class="card ${collapsed}" style="border-left: 5px solid black;">
                             <div class="card-header bg-${card_masuk}" data-card-widget="collapse" onclick="load_list_agenda('${e.tanggal}')">
                                 ${hari_ini_bedge}
                                 <table>
@@ -623,6 +635,7 @@
                                     return this.value;
                                     }).get(),
                         catatan_absen: $("#catatan_absen").val(),
+                        link_surat_tugas_absen: $("#link_surat_tugas_absen").val(),
                         _token: token
                     },
                     success: function (response){
@@ -640,10 +653,11 @@
                         Swal.close();
                 },
                 error: function (xhr, status, error) {
+                    let response = xhr.responseJSON;
                     Swal.fire({
                         icon: "error",
                         title: "Oops...",
-                        text: "Terjadi kesalahan. Silakan hubungi admin.",
+                        text: "Terjadi kesalahan. Silakan hubungi admin.\n\n"+response.message,
                         });
                     }
                 });
@@ -715,6 +729,7 @@
                         let jam = response["jam_" + tipe];
                         let jarak = response["jarak_" + tipe];
                         let rules = response["rules"] || '';
+                        let jam_rules = response["jam_" + tipe + '_rules'];
                         const latitude = response[tipe + "_latitude"] ;
                         const longitude = response[tipe + "_longitude"];
                         const latlong = `${latitude},${longitude}`;
@@ -736,11 +751,23 @@
                         $('#detail_absen').append(distance_warning);
                         if (tipe=='masuk') {
                             $('#detail_absen').append("Telat : " + response.menit_telat + " menit<br>");
+
+                            tambahan_jam_perbaikan = "1.5";
+                        } else {
+                            tambahan_jam_perbaikan = "2";
                         }
+
+                        if (bolehPerbaikan(tanggal, jam_rules, tambahan_jam_perbaikan, tipe)) { // jika jam perbaikan lebih 1.5 jam (untuk jam masuk) & 2 jam (untuk jam pulang), maka disabled
+                            $("#simpan_perbaikan").prop("disabled", false);
+                        } else {
+                            $("#simpan_perbaikan").prop("disabled", true);
+                        }
+
                         $('.tipe_absen_html').html(tipe);
                         // bersihkan inputan perbaikan
                         $("input[name='tipe_perbaikan[]']").prop('checked', false); 
                         $('#catatan').val('');
+                        $('#link_surat_tugas_absen').val('');
 
                         // Loop perbaikan
                         response.perbaikan.forEach(function(perbaikan) {
@@ -803,6 +830,7 @@
                                     ${jam_sebelumnya}
                                     ${jarak_sebelumnya}
                                     Alasan: ${perbaikan.alasan}<br>
+                                    Link Surat Tugas: <a href="${perbaikan.link_surat_tugas}">${perbaikan.link_surat_tugas}</a><br>
                                     Status: ${statusText}<br>
                                     Keterangan Sekretariat: ${perbaikan.keterangan_pic}<br>
                                 </div>
@@ -1018,9 +1046,11 @@
                                     return this.value;
                                     }).get(),
                         catatan: $("#catatan").val(),
+                        link_surat_tugas_absen: $("#link_surat_tugas_absen").val(),
                         _token: token
                     },
                     success: function (response){
+
                         $('#detail').modal('hide');
                         Swal.fire({
                             icon: "success",
@@ -1032,13 +1062,71 @@
                         Swal.close();
                 },
                 error: function (xhr, status, error) {
+                    let response = xhr.responseJSON;
                     Swal.fire({
                         icon: "error",
                         title: "Oops...",
-                        text: "Terjadi kesalahan. Silakan hubungi admin.",
+                        text: "Terjadi kesalahan. Silakan hubungi admin.\n\n"+response.message,
                         });
                     }
                 });
             });
+
+            function hapusSubmit() {
+                let message = "Apakah Anda yakin ingin menghapus absen Masuk & Keluar ini? Absen yang dihapus satu paket (absen masuk dan absen pulang)";
+                if (confirm(message)) {
+                    let token   = $("meta[name='csrf-token']").attr("content");
+                    $.ajax({
+                        url: "{{ route('absen.destroy') }}",
+                        type: "POST",
+                        cache: false,
+                        data: {
+                            uuid: $('#uuid_absen').val(),
+                            _method:'DELETE',
+                            _token: token
+                        },
+                        success: function (response){
+                            $('#detail').modal('hide');
+                            load_tanggal();
+                        },
+                        error: function (response){
+                            modal_error(response);
+                        }
+                        }).done(function() { 
+                    });
+                }
+            }
+
+            // fitur perbaikan
+            function hitungBatasWaktu(tanggalRules, jamRules, tambahanJam) {
+                let [year, month, day] = tanggalRules.split("-").map(Number);
+                let [hour, minute] = jamRules.split(":").map(Number);
+
+                // base datetime dari rules
+                let batas = new Date(
+                    year,
+                    month - 1,
+                    day,
+                    hour,
+                    minute,
+                    0
+                );
+
+                // tambah jam (desimal support)
+                batas.setMinutes(batas.getMinutes() + (tambahanJam * 60));
+
+                return batas;
+            }
+
+    /**
+     * Cek apakah sekarang masih boleh perbaikan
+    */
+    function bolehPerbaikan(tanggalRules, jamRules, tambahanJam, tipe) {
+        let now = new Date();
+        let batas = hitungBatasWaktu(tanggalRules, jamRules, tambahanJam);
+        $("#max_perbaikan").html("Jam "+tipe+" rules : "+jamRules+"; max terakhir perbaikan "+tambahanJam+" jam dari rules");
+
+        return now <= batas;
+    }
     </script>
 @endsection

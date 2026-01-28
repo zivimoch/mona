@@ -20,28 +20,73 @@ class RekapController extends Controller
     }
 
     function load_rekap(Request $request) {
+        $year = $request->tahun ?? date('Y');
+
         $user = User::where('uuid', $request->uuid)->first();
         $datas = DB::table('users as a')
                 ->leftJoin('absen as b', 'a.id', 'b.user_id')
-                ->whereYear('b.tanggal_masuk', $request->tahun)
-                ->whereMonth('b.tanggal_masuk', $request->bulan)
+                ->whereYear('b.tanggal_masuk', $year)
+                ->whereNull('b.deleted_at')
                 ->selectRaw('
-                a.uuid, a.name, a.jabatan,
+                a.uuid, a.name, a.wilayah, a.penempatan, a.jabatan, a.email,
+                ROUND(
+                    SUM(
+                    TIMESTAMPDIFF(
+                        MINUTE, 
+                        CONCAT(b.tanggal_masuk, " ", b.jam_masuk),
+                        CONCAT(
+                        IF(b.kode_shift_rules IN (1, 2, 7, 8) AND 
+                            TIMESTAMPDIFF(DAY, b.tanggal_masuk, b.tanggal_pulang) > 0
+                            , b.tanggal_masuk, b.tanggal_pulang),
+                        " ",
+                        b.jam_pulang
+                        )
+                    )
+                    ), 0
+                ) AS total_menit_hadir,
+                ROUND(
+                    AVG(
+                    TIMESTAMPDIFF(
+                        MINUTE, 
+                        CONCAT(b.tanggal_masuk, " ", b.jam_masuk),
+                        CONCAT(
+                        IF(b.kode_shift_rules IN (1, 2, 7, 8) AND 
+                            TIMESTAMPDIFF(DAY, b.tanggal_masuk, b.tanggal_pulang) > 0
+                            , b.tanggal_masuk, b.tanggal_pulang),
+                        " ",
+                        b.jam_pulang
+                        )
+                    )
+                    ), 0
+                ) AS rata_menit_hadir,
                 SUM(
                     CASE WHEN b.jarak_masuk > 100 THEN 1 ELSE 0 END + 
                     CASE WHEN b.jarak_pulang > 100 THEN 1 ELSE 0 END
                 ) AS diluar_radius,
-                COUNT(DISTINCT b.id) AS total_hari,
+                SUM(CASE WHEN b.tanggal_pulang IS NOT NULL AND kategori != "cuti" THEN 1 ELSE 0 END) AS total_hari,
                 SUM(b.menit_telat) AS total_menit_telat,
+                AVG(b.menit_telat) AS rata_menit_telat,
                 SUM(CASE WHEN b.tanggal_pulang IS NULL AND kategori != "cuti" THEN 1 ELSE 0 END) AS tidak_absen_pulang,
                 0 AS total_menit_pulang_awal,
                 FLOOR(COALESCE(SUM(b.menit_telat), 0) / 480) AS total_hari_telat
-            ')->groupBy('a.id', 'a.uuid', 'a.name', 'a.jabatan');
-            
+            ')->groupBy('a.id', 'a.uuid', 'a.name', 'a.jabatan', 'a.email' , 'a.wilayah', 'a.penempatan');
 
-        if (isset($request->uuid)) {
+        if (isset($request->bulan)) {
+            $datas = $datas->whereMonth('b.tanggal_masuk', $request->bulan);
+        } 
+        
+        if (isset($request->uuid) && $request->fatch_json == false) {
             $datas = $datas->where('a.id', $user->id)->first();
             return response()->json($datas);
+        } else if ($request->fatch_json) {
+            $datas = $datas->groupBy('a.id')->get();
+            $response = array(
+                'status' => 200,
+                'year' => $year,
+                'data' => $datas
+            );
+            
+            return response()->json($response, 200); 
         } else {
             $datas = $datas->get();
             return DataTables::of($datas)->make(true);
@@ -83,6 +128,7 @@ class RekapController extends Controller
             b.jarak_masuk, b.jarak_pulang, 
             b.catatan_masuk, b.catatan_pulang, 
             b.menit_telat AS menit_terlambat,
+            GROUP_CONCAT(DISTINCT d.alasan, '; ') AS alasan,
             GROUP_CONCAT(DISTINCT 
                 CONCAT(d.uuid, ':', IFNULL(d.tipe_absen, '-'), ':', IFNULL(d.disetujui, '-'))
                 ORDER BY d.id ASC
@@ -93,6 +139,8 @@ class RekapController extends Controller
         ->leftJoin('perbaikan_absen as d', 'd.absen_id', '=', 'b.id')
         ->whereYear('b.tanggal_masuk', '=', $request->tahun)
         ->whereMonth('b.tanggal_masuk', '=', $request->bulan)
+        ->whereNull('b.deleted_at')
+        ->whereNull('d.deleted_at')
         ->groupBy(
             'b.id', 
             'a.name', 

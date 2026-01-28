@@ -5,6 +5,7 @@ use App\Http\Controllers\CutiController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\LogActivityController;
 use App\Http\Controllers\RekapController;
+use App\Http\Controllers\SSOClientController;
 use App\Http\Controllers\UsersController;
 use Illuminate\Support\Facades\Route;
 
@@ -20,9 +21,9 @@ Route::middleware('auth')->group(function () {
     Route::post('absen/store_perbaikan/', [AbsenController::class, 'store_perbaikan'])->name('absen.store_perbaikan');
     Route::get('absen/load_perbaikan', [AbsenController::class, 'load_perbaikan'])->name('absen.load_perbaikan');
     Route::get('absen/perbaikan', [AbsenController::class, 'perbaikan'])->name('absen.perbaikan');
+    Route::delete('absen/destroy/', [AbsenController::class, 'destroy'])->name('absen.destroy');
     Route::get('rekap/detail_user', [RekapController::class, 'detail_user'])->name('rekap.detail_user');
     Route::get('rekap/load_detail_user', [RekapController::class, 'load_detail_user'])->name('rekap.load_detail_user');
-    Route::get('rekap/load_rekap', [RekapController::class, 'load_rekap'])->name('rekap.load_rekap');
     Route::get('rekap/load_rekap_user', [RekapController::class, 'load_rekap_user'])->name('rekap.load_rekap_user');
     Route::get('cuti/detail_user', [CutiController::class, 'detail_user'])->name('cuti.detail_user');
     Route::get('cuti/load_detail', [CutiController::class, 'load_detail'])->name('cuti.load_detail');
@@ -43,4 +44,9 @@ Route::post('cuti/store_permohonan', [CutiController::class, 'store_permohonan']
 
 // API
 Route::get('cuti/get_user_cuti', [CutiController::class, 'get_user_cuti'])->name('api.cuti.get_user_cuti');
+Route::get('rekap/load_rekap', [RekapController::class, 'load_rekap'])->name('rekap.load_rekap');
+
+// SSO
+Route::post('/sso/consume', [SSOClientController::class, 'consume'])->name('sso.consume');
+
 require __DIR__.'/auth.php';
