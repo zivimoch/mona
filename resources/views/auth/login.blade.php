@@ -81,6 +81,28 @@
                         <span class="text-nowrap" style="color: black"><i class="fas fa-shield-alt"></i> SSO PPPA</span>
                         <div class="flex-grow-1 ms-3" style="border-top: 2px solid #475569;"></div>
                     </div>
+                    <form class="login100-form validate-form" method="POST" action="{{ route('login') }}">
+                    @if ($errors->any())
+                    <div style="padding: 10px; background-color: red; font-weight: bold; color: white;">
+                        Email atau password yang anda masukan salah! Silahkan hubungi admin.
+                    </div>
+                    <br />
+                    @endif 
+                    @csrf
+                    <div class="wrap-input100 validate-input" data-validate="Valid email is required: ex@abc.xyz">
+                        <input class="input100" type="text" name="email" autofocus />
+                        <span class="focus-input100"></span>
+                        <span class="label-input100">Email</span>
+                    </div>
+                    <div class="wrap-input100 validate-input" data-validate="Password is required">
+                        <input class="input100" type="password" name="password" value=""/>
+                        <span class="focus-input100"></span>
+                        <span class="label-input100">Password</span>
+                    </div>
+                    <div class="container-login100-form-btn">
+                        <button class="login100-form-btn">Login</button>
+                    </div>
+                </form>
                     <center>
                         <button type="button" onclick="loginWithMoke()" class="btn btn-glow btn-lg">
                             <i class="fas fa-lock"></i> Masuk dengan MOKE

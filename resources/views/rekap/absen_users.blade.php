@@ -115,23 +115,19 @@
                         <label for="">Bulan</label>
                         <select id="filter_bulan" class="form-control">
                             @for ($i = 1; $i <= 12; $i++)
-                                <option value="{{ $i }}" {{ $i == date('n') ? 'selected' : '' }}>{{ $i }}</option>
+                                <option value="{{ $i }}" {{ $i == (request('bulan') ?? date('n')) ? 'selected' : '' }}>
+                                    {{ $i }}
+                                </option>
                             @endfor
                         </select>
                     </div>
                     <div class="form-group">
                         <label for="">Tahun</label>
                         <select id="filter_tahun" class="form-control">
-                            @php
-                                $currentYear = date('Y');
-                                $startYear = 2025;
-                                $endYear = date('Y');
-                            @endphp
-                            @for ($year = $startYear; $year <= $endYear; $year++)
-                                @php
-                                    $selected = ($year == $currentYear) ? 'selected' : '';
-                                @endphp
-                                <option value="{{ $year }}" {{ $selected }}>{{ $year }}</option>
+                            @for ($year = 2025; $year <= date('Y'); $year++)
+                                <option value="{{ $year }}" {{ $year == (request('tahun') ?? date('Y')) ? 'selected' : '' }}>
+                                    {{ $year }}
+                                </option>
                             @endfor
                         </select>
                 </div>
@@ -191,6 +187,75 @@
                         </div>
                     </div>
                     </div>
+                </div>
+        </div>
+        </div>
+
+        <!-- Modal Detail Absen-->
+    <div class="modal fade" id="modal_detail" tabindex="-1" role="dialog" aria-hidden="true" data-backdrop="static">
+        <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+            <h5 class="modal-title">Detail Absen</h5>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+            </div>
+                <div class="modal-body">
+                    <input type="hidden" id="detail_uuid">
+                        <div class="form-group">
+                            <label>Jabatan : </label>
+                            <input id="detail_jabatan" type="text" class="form-control" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>Nama Lengkap : </label>
+                            <input id="detail_name" type="text" class="form-control" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label>Rules : </label>
+                            <select name="kode_shift_rules" id="kode_shift_rules" class="form-control">
+                                @foreach ($rules as $rule)
+                                    <option value="{{ $rule->kode }}">{{ $rule->judul }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Tanggal Masuk : </label>
+                            <input id="detail_tanggal_masuk" type="date" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Jam Masuk : </label>
+                            <input id="detail_jam_masuk" type="time" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Jarak Masuk : </label>
+                            <input id="detail_jarak_masuk" type="number" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <input id="detail_catatan_masuk" type="hidden" class="form-control" value="Diperbaiki oleh sekretariat karena lewat waktu perbaikan.">
+                        </div>
+                        <div class="form-group">
+                            <label>Tanggal Pulang : </label>
+                            <input id="detail_tanggal_pulang" type="date" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Jam Pulang : </label>
+                            <input id="detail_jam_pulang" type="time" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Jarak Pulang : </label>
+                            <input id="detail_jarak_pulang" type="number" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <label>Terlambat (menit) : </label>
+                            <input id="detail_menit_terlambat" type="number" class="form-control">
+                        </div>
+                        <div class="form-group">
+                            <input id="detail_catatan_pulang" type="hidden" class="form-control" value="Diperbaiki oleh sekretariat karena lewat waktu perbaikan.">
+                        </div>
+                        <div class="form-group">
+                            <button id="simpan_absen" type="button" class="btn btn-block btn-primary">Submit</button>
+                        </div>
                 </div>
         </div>
         </div>
@@ -289,6 +354,34 @@
             "dom": 'Blfrtip',
             "buttons": ["pageLength", "copy", "excel", "pdf"]
         }).buttons().container().appendTo('#tabelRekap_wrapper .col-md-6:eq(0)');
+
+        @if (Auth::user()->jabatan == 'Sekretariat')
+            $('#tabelRekap tbody').on('click', 'tr', function (evt) {
+                if (![10].includes($(evt.target).closest('td').index())) {
+                    var table = $('#tabelRekap').DataTable();
+                    var rowData = table.row(this).data();   
+                    showModalDetail(rowData);
+                }
+            });
+        @endif
+    }
+
+    function showModalDetail(data) {
+        console.log(data);
+        
+        $('#detail_uuid').val(data.uuid);
+        $('#detail_jabatan').val(data.jabatan);
+        $('#detail_name').val(data.name);
+        $('#detail_kode_shift_rules').val(data.kode_shift_rules).trigger('change');
+        $('#detail_tanggal_masuk').val(data.tanggal_masuk);
+        $('#detail_jam_masuk').val(data.jam_masuk);
+        $('#detail_jarak_masuk').val(data.jarak_masuk);
+        $('#detail_tanggal_pulang').val(data.tanggal_pulang);
+        $('#detail_jam_pulang').val(data.jam_pulang);
+        $('#detail_jarak_pulang').val(data.jarak_pulang);
+        $('#detail_menit_terlambat').val(data.menit_terlambat);
+        
+        $('#modal_detail').modal('show');
     }
 
     function load_rekap() {
@@ -370,7 +463,7 @@
                 $('#keterangan_pic_html').html(response.keterangan_pic);
                 $('#perbaikan').modal('show');
 
-                if (response.disetujui == null && {{ auth()->user()->jabatan }} == 'Sekretariat') {
+                if (response.disetujui == null && '{{ auth()->user()->jabatan }} '== 'Sekretariat') {
                     $('#formpersetujuan').show();
                 } else {
                     $('#formpersetujuan').hide();
@@ -414,6 +507,58 @@
                     },
                     success: function (response){
                         $('#perbaikan').modal('hide');
+                        load_data();
+                        Swal.fire({
+                            icon: "success",
+                            title: "Berhasil di simpan",
+                            showConfirmButton: false,
+                            timer: 1500,
+                            position: "center"
+                        });
+                        Swal.close();
+                },
+                error: function (xhr, status, error) {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Oops...",
+                        text: "Terjadi kesalahan. Silakan hubungi admin.",
+                        });
+                    }
+                });
+            });
+
+        $('#simpan_absen').click(function() {
+                Swal.fire({
+                    title: "Proses...",
+                    position: "center",
+                    didOpen: () => {
+                        Swal.showLoading();
+                    },
+                    allowOutsideClick:false
+                });
+                
+                let token   = $("meta[name='csrf-token']").attr("content");
+
+                $.ajax({
+                    url: "{{ route('absen.update_absen') }}",
+                    type: "POST",
+                    cache: false,
+                    data: {
+                        uuid: $("#detail_uuid").val(),
+                        kode_shift_rules: $("#kode_shift_rules").val(),
+                        tanggal_masuk: $("#detail_tanggal_masuk").val(),
+                        jam_masuk: $("#detail_jam_masuk").val(),
+                        jarak_masuk: $("#detail_jarak_masuk").val(),
+                        catatan_masuk: $("#detail_catatan_masuk").val(),
+                        tanggal_pulang: $("#detail_tanggal_pulang").val(),
+                        jam_pulang: $("#detail_jam_pulang").val(),
+                        jarak_pulang: $("#detail_jarak_pulang").val(),
+                        menit_terlambat: $("#detail_menit_terlambat").val(),
+                        catatan_pulang: $("#detail_catatan_pulang").val(),
+                        _token: token
+                    },
+                    success: function (response){
+                        $('#modal_detail').modal('hide');
                         load_data();
                         Swal.fire({
                             icon: "success",

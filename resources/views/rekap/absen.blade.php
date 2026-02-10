@@ -160,7 +160,9 @@
     }
 
     $('#tabelRekap tbody').on('click', 'tr', function () {
-        redirectUrl = "{{ route('rekap.detail_user') }}?user_id="+this.id;
+        let tahun = $('#filter_tahun').val();
+        let bulan = $('#filter_bulan').val();
+        redirectUrl = "{{ route('rekap.detail_user') }}?user_id="+this.id+"&tahun="+tahun+"&bulan="+bulan;
         window.location.href = redirectUrl;
     });
 

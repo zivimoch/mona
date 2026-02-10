@@ -142,6 +142,14 @@
                         title: text,
                         });
             }
+  $(document).ajaxError(function (event, jqxhr) {
+        if (jqxhr.status === 401 || jqxhr.status === 419) {
+            if(confirm('Sesi anda sudah habis, klik OK untuk login kembali. Jika ada pekerjaan yang belum disimpan, silakan klik CANCEL & salin pekerjaan terlebih dahulu, atau buka halaman baru & login kembali.')) {
+              window.location.href = '/login';
+              return;
+            }
+        }
+    });
 </script>
 </body>
 </html>

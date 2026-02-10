@@ -230,12 +230,18 @@ class AbsenController extends Controller
 
                 $uuid = $request->uuid;
 
+                if ($request->type == 'masuk') {
+                    $jam = now()->addMinutes(5)->toTimeString();
+                    } else {
+                    $jam = now()->subMinutes(5)->toTimeString();
+                }
+
                 $data = [
                     'user_id' => Auth::user()->id, 
                     'kantor_latitude' => Auth::user()->kantor_latitude, 
                     'kantor_longitude' => Auth::user()->kantor_longitude,
                     'tanggal_' . $request->tipe => now()->toDateString(), // Current date (YYYY-MM-DD)
-                    'jam_' . $request->tipe => now()->toTimeString(),    // Current time (HH:MM:SS)
+                    'jam_' . $request->tipe => $jam,    // Current time (HH:MM:SS)
                     $request->tipe . '_latitude' => $request->my_latitude,
                     $request->tipe . '_longitude' => $request->my_longitude,
                     'foto_' . $request->tipe => $request->foto,
@@ -279,9 +285,9 @@ class AbsenController extends Controller
                     $shift = ShiftRules::where('kode', $absen->kode_shift_rules)->first();
                     $batas_waktu = null;
                     if ($request->tipe == 'masuk') {
-                        $batas_waktu = Carbon::parse($absen->tanggal_masuk . ' ' . $shift->jam_masuk)->addHours(1.5);
+                        $batas_waktu = Carbon::parse($absen->tanggal_masuk . ' ' . $shift->jam_masuk)->addMinutes(95);
                     } else {
-                        $batas_waktu = Carbon::parse($absen->tanggal_pulang . ' ' . $shift->jam_pulang)->addHours(2);
+                        $batas_waktu = Carbon::parse($absen->tanggal_pulang . ' ' . $shift->jam_pulang)->addMinutes(125);
                     }
 
                     if (now()->greaterThan($batas_waktu)) {
@@ -296,7 +302,8 @@ class AbsenController extends Controller
                         'user_id' => Auth::user()->id, 
                         'tipe_absen' => $request->tipe, 
                         'tipe_perbaikan' => json_encode($request->tipe_perbaikan_absen), 
-                        'alasan' => preg_replace('/[\x{1F000}-\x{1FFFF}]/u', '', $request->catatan_absen)
+                        'alasan' => iconv('UTF-8', 'ASCII//TRANSLIT', $request->catatan_absen),
+
                     ];
 
                     if (in_array('jam', $request->tipe_perbaikan_absen)) { 
@@ -314,7 +321,10 @@ class AbsenController extends Controller
                 'message' => 'Data Berhasil Disimpan!'
             ]);
         } catch (Exception $e){
-            return response()->json(['message' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'status' => 'error',
+                'message' => $e->getMessage()]);
             die();
         }
     }
@@ -368,7 +378,7 @@ class AbsenController extends Controller
                         'user_id' => Auth::user()->id, 
                         'tipe_absen' => $request->tipe_absen, 
                         'tipe_perbaikan' => json_encode($request->tipe_perbaikan), 
-                        'alasan' => $request->catatan,
+                        'alasan' => iconv('UTF-8', 'ASCII//TRANSLIT', $request->catatan),
                         'link_surat_tugas' => $request->link_surat_tugas_absen
                     ];
                     
@@ -414,7 +424,10 @@ class AbsenController extends Controller
                 'message' => 'Data Berhasil Disimpan!'
             ]);
         } catch (Exception $e){
-            return response()->json(['message' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'status' => 'error',
+                'message' => $e->getMessage()]);
             die();
         }
     }
@@ -448,8 +461,46 @@ class AbsenController extends Controller
                 'message' => 'Data Berhasil Dihapus!'
             ]);
         } catch (Exception $e){
-            return response()->json(['message' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'status' => 'error',
+                'message' => $e->getMessage()]);
             die();
+        }
+        
+    }
+
+    function update_absen(Request $request) {
+        if (Auth::user()->jabatan != "Sekretariat") {
+            abort(403, 'Unauthorized action.');
+        }
+        // dipakai sekretariat untuk edit data user yang tidak sempat perbaikan
+
+        $absen = DB::table('absen')->where('uuid', $request->uuid)->first();
+
+        if ($absen) {
+            DB::table('absen')->where('uuid', $request->uuid)->update([
+                'kode_shift_rules' => $request->kode_shift_rules,
+                'tanggal_masuk' => $request->tanggal_masuk,
+                'jam_masuk' => $request->jam_masuk,
+                'jarak_masuk' => $request->jarak_masuk,
+                'catatan_masuk' => $request->catatan_masuk,
+                'tanggal_pulang' => $request->tanggal_pulang,
+                'jam_pulang' => $request->jam_pulang,
+                'jarak_pulang' => $request->jarak_pulang,
+                'catatan_pulang' => $request->catatan_pulang,
+                'menit_telat' => $request->menit_terlambat,
+            ]);
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Data absen berhasil diperbarui.'
+            ], 200);
+        } else {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Data absen tidak ditemukan.'
+            ], 404);
         }
         
     }

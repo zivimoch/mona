@@ -22,6 +22,7 @@ Route::middleware('auth')->group(function () {
     Route::get('absen/load_perbaikan', [AbsenController::class, 'load_perbaikan'])->name('absen.load_perbaikan');
     Route::get('absen/perbaikan', [AbsenController::class, 'perbaikan'])->name('absen.perbaikan');
     Route::delete('absen/destroy/', [AbsenController::class, 'destroy'])->name('absen.destroy');
+    Route::post('absen/update_absen/', [AbsenController::class, 'update_absen'])->name('absen.update_absen');
     Route::get('rekap/detail_user', [RekapController::class, 'detail_user'])->name('rekap.detail_user');
     Route::get('rekap/load_detail_user', [RekapController::class, 'load_detail_user'])->name('rekap.load_detail_user');
     Route::get('rekap/load_rekap_user', [RekapController::class, 'load_rekap_user'])->name('rekap.load_rekap_user');

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\PerbaikanAbsen;
+use App\Models\ShiftRules;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
@@ -16,7 +17,9 @@ class RekapController extends Controller
     }
 
     public function detail_user() {
-        return view('rekap.absen_users');
+        $rules = ShiftRules::whereNull('deleted_at')->get();
+
+        return view('rekap.absen_users')->with('rules', $rules);
     }
 
     function load_rekap(Request $request) {
@@ -122,8 +125,8 @@ class RekapController extends Controller
         $datas = DB::table('users as a')
         ->selectRaw("
             a.name, a.jabatan, 
-            IF(c.judul IS NOT NULL, c.judul, 'cuti') AS rules, 
-            b.tanggal_masuk, b.tanggal_pulang, 
+            IF(c.judul IS NOT NULL, c.judul, 'cuti') AS rules,
+            b.uuid, b.kode_shift_rules, b.tanggal_masuk, b.tanggal_pulang, 
             b.jam_masuk, b.jam_pulang, 
             b.jarak_masuk, b.jarak_pulang, 
             b.catatan_masuk, b.catatan_pulang, 
@@ -154,7 +157,9 @@ class RekapController extends Controller
             'b.jarak_pulang', 
             'b.catatan_masuk', 
             'b.catatan_pulang',
-            'b.menit_telat'
+            'b.menit_telat',
+            'b.uuid',
+            'b.kode_shift_rules'
         );
         if (isset($request->user_id)) {
             // untuk melihat detail absen user
@@ -164,6 +169,7 @@ class RekapController extends Controller
             $datas = $datas->whereNotNull('d.absen_id')->orderBy('b.id', 'desc');
         }
         $datas = $datas->get();
+
     
         return DataTables::of($datas)->make(true);
     }
