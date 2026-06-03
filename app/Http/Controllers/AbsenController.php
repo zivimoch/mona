@@ -194,11 +194,21 @@ class AbsenController extends Controller
             $data->jam_pulang_fleksi = date('H:i:s', strtotime($data->jam_pulang_rules) + $penalty);
         } else {
             // if (Auth::user()->jabatan == 'Unit Reaksi Cepat' || Auth::user()->kantor_latitude == '-6.183773887087405') {
-                $data->jam_pulang_fleksi = $data->jam_pulang_rules;
+                    // $data->jam_pulang_fleksi = $data->jam_pulang_rules;
             // } else {
                 // $menit_awal = (strtotime($data->jam_masuk_rules) - strtotime($data->jam_masuk)) / 60;
                 // $adjustment = min($menit_awal, 60) * 60;
                 // $data->jam_pulang_fleksi = date('H:i:s', strtotime($data->jam_pulang_rules) - $adjustment);
+            // }
+
+            // if (in_array($data->kode_shift_rules, [7,8, ])) {
+            //     // baris ini aktif kalo pas ramadhan (saat ramadhan diberlakukan fleksi maju dan mundur)
+            //     $menit_awal = (strtotime($data->jam_masuk_rules) - strtotime($data->jam_masuk)) / 60;
+            //     $adjustment = min($menit_awal, 60) * 60;
+            //     $data->jam_pulang_fleksi = date('H:i:s', strtotime($data->jam_pulang_rules) - $adjustment);
+            // } else {
+                // kalo bukan ramadhan hanya fleksi mundur tidak ada fleksi maju
+                $data->jam_pulang_fleksi = $data->jam_pulang_rules;
             // }
         }
         // data perbaikan 
@@ -230,10 +240,13 @@ class AbsenController extends Controller
 
                 $uuid = $request->uuid;
 
-                if ($request->type == 'masuk') {
-                    $jam = now()->addMinutes(5)->toTimeString();
+                if ($request->tipe == 'masuk') {
+                        // jima masuk maka jam maju 5 menit 
+                        $jamAbsen = now()->subMinutes(5);
+                        $jam = $jamAbsen->toTimeString();
                     } else {
-                    $jam = now()->subMinutes(5)->toTimeString();
+                        // jika pulang seperti biasa
+                        $jam = now()->toTimeString();
                 }
 
                 $data = [
@@ -254,8 +267,8 @@ class AbsenController extends Controller
 
                     $jamMasuk = ShiftRules::where('kode', $request->shift)->value('jam_masuk');
                     $jamMasukPlusOneHour = Carbon::parse($jamMasuk)->addHour();
-                    if (now()->greaterThan($jamMasukPlusOneHour)) {
-                        $menitTelat = (int) $jamMasukPlusOneHour->diffInMinutes(now());
+                    if ($jamAbsen->greaterThan($jamMasukPlusOneHour)) {
+                        $menitTelat = (int) $jamMasukPlusOneHour->diffInMinutes($jamAbsen);
                     } else {
                         $menitTelat = 0;
                     }
@@ -398,21 +411,8 @@ class AbsenController extends Controller
                         'keterangan_pic' => $request->keterangan_pic,
                     ];
 
-                    if ($request->disetujui == 1) {
-                        // jika disetujui maka update Absen. Jika perubahan adalah jam maka jadikan jam masuk / pulang menjadi sesuai rule yang dipilih dan jadikan menit telat = 0.
-                        // jika perubahan adalah jarak maka ubah distance jadi 0
-
-                        $persetujuan_perbaikan = PerbaikanAbsen::where('uuid', $request->uuid)->first();
-                        $absen_perbaikan = Absen::where('id', $persetujuan_perbaikan->absen_id)->first();
-                        if ($persetujuan_perbaikan->jam_sebelumnya != null) {
-                            $absen->menit_telat = 0;
-                            $absen->{'jam_' . $request->tipe_absen} = ShiftRules::where('kode', $absen_perbaikan->kode_shift_rules)->value('jam_' . $request->tipe_absen);
-                        }
-                        if ($persetujuan_perbaikan->jarak_sebelumnya != null) {
-                            $absen->{'jarak_' . $request->tipe_absen} = 0;
-                        }
-                        $absen->save();
-                    }
+                    $persetujuan_perbaikan = PerbaikanAbsen::where('uuid', $request->uuid)->first();
+                    $this->applyPersetujuanPerbaikan($persetujuan_perbaikan, $request->disetujui);
                 }
                 
                 $proses = PerbaikanAbsen::updateOrCreate(['uuid' => $uuid], $data);
@@ -432,6 +432,85 @@ class AbsenController extends Controller
         }
     }
 
+    public function bulk_setujui_perbaikan(Request $request)
+    {
+        if (Auth::user()->jabatan != 'Sekretariat') {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $uuids = $request->uuids;
+        if (!is_array($uuids) || count($uuids) == 0) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Pilih minimal satu pengajuan perbaikan absen.'
+            ], 422);
+        }
+
+        $perbaikans = PerbaikanAbsen::whereIn('uuid', $uuids)
+            ->whereNull('deleted_at')
+            ->get();
+
+        foreach ($perbaikans as $perbaikan) {
+            $this->applyPersetujuanPerbaikan($perbaikan, 1);
+            $perbaikan->update([
+                'disetujui' => 1,
+                'keterangan_pic' => $request->keterangan_pic ?? $perbaikan->keterangan_pic,
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'code' => 200,
+            'total' => $perbaikans->count(),
+            'message' => $perbaikans->count().' pengajuan berhasil disetujui.'
+        ]);
+    }
+
+    private function applyPersetujuanPerbaikan($perbaikan, $disetujui): void
+    {
+        if (!$perbaikan) {
+            return;
+        }
+
+        $absen = Absen::where('id', $perbaikan->absen_id)->first();
+        if (!$absen) {
+            return;
+        }
+
+        if ($disetujui == 1) {
+            if ($perbaikan->jam_sebelumnya != null) {
+                $absen->menit_telat = 0;
+                $absen->{'jam_' . $perbaikan->tipe_absen} = ShiftRules::where('kode', $absen->kode_shift_rules)->value('jam_' . $perbaikan->tipe_absen);
+            }
+
+            if ($perbaikan->jarak_sebelumnya != null) {
+                $absen->{'jarak_' . $perbaikan->tipe_absen} = 0;
+            }
+
+            $absen->save();
+            return;
+        }
+
+        if ($perbaikan->jam_sebelumnya != null) {
+            $absen->{'jam_' . $perbaikan->tipe_absen} = $perbaikan->jam_sebelumnya;
+
+            if ($perbaikan->tipe_absen == 'masuk') {
+                $jamMasuk = ShiftRules::where('kode', $absen->kode_shift_rules)->value('jam_masuk');
+                $jamMasukPlusOneHour = Carbon::parse($jamMasuk)->addHour();
+                $jamAbsen = Carbon::parse($perbaikan->jam_sebelumnya);
+                $absen->menit_telat = $jamAbsen->greaterThan($jamMasukPlusOneHour)
+                    ? (int) $jamMasukPlusOneHour->diffInMinutes($jamAbsen)
+                    : 0;
+            }
+        }
+
+        if ($perbaikan->jarak_sebelumnya != null) {
+            $absen->{'jarak_' . $perbaikan->tipe_absen} = $perbaikan->jarak_sebelumnya;
+        }
+
+        $absen->save();
+    }
+
     function load_perbaikan(Request $request) {
         $data = PerbaikanAbsen::where('uuid', $request->uuid)
                     ->whereNull('deleted_at')
@@ -439,6 +518,10 @@ class AbsenController extends Controller
         $absen = Absen::where('id', $data->absen_id)->first();
         $data->uuid_absen = $absen->uuid;
         return response()->json($data);
+    }
+    
+    public function perbaikan_per_pengajuan() {
+        return view('rekap.perbaikan_per_pengajuan');
     }
 
     public function perbaikan() {

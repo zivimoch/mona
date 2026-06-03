@@ -102,6 +102,15 @@
                                         if ($item->kode == 2 && date('N') == '5') { 
                                             $selected = 'selected';
                                         }
+
+                                        if ($item->kode == 7 && date('N') !== '5') { 
+                                            $selected = 'selected';
+                                        }
+                            
+                                        // Select opsi 2 jika hari Jumat
+                                        if ($item->kode == 8 && date('N') == '5') { 
+                                            $selected = 'selected';
+                                        }
                             
                                         // Select salah satu shift URC jika jabatan URC dan waktu terdekat 30 menit
                                         if (Auth::user()->jabatan == "Unit Reaksi Cepat") {
@@ -119,7 +128,7 @@
                                         }
                             
                                         // Select RPS jika koordinat == koordinat RPS
-                                        if ($item->kode == 6 && Auth::user()->kantor_latitude == '-6.183773887087405') {
+                                        if ($item->kode == 6 && Auth::user()->kantor_latitude == '-6.187422446912454') {
                                             $selected = 'selected';
                                         }
                                     @endphp

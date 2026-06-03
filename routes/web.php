@@ -19,12 +19,16 @@ Route::middleware('auth')->group(function () {
     Route::post('absen/store/', [AbsenController::class, 'store'])->name('absen.store');
     Route::get('absen/load_agenda', [AbsenController::class, 'load_agenda'])->name('absen.load_agenda');
     Route::post('absen/store_perbaikan/', [AbsenController::class, 'store_perbaikan'])->name('absen.store_perbaikan');
+    Route::post('absen/bulk_setujui_perbaikan/', [AbsenController::class, 'bulk_setujui_perbaikan'])->name('absen.bulk_setujui_perbaikan');
     Route::get('absen/load_perbaikan', [AbsenController::class, 'load_perbaikan'])->name('absen.load_perbaikan');
+    Route::get('absen/perbaikan_per_pengajuan', [AbsenController::class, 'perbaikan_per_pengajuan'])->name('absen.perbaikan_per_pengajuan');
     Route::get('absen/perbaikan', [AbsenController::class, 'perbaikan'])->name('absen.perbaikan');
     Route::delete('absen/destroy/', [AbsenController::class, 'destroy'])->name('absen.destroy');
     Route::post('absen/update_absen/', [AbsenController::class, 'update_absen'])->name('absen.update_absen');
     Route::get('rekap/detail_user', [RekapController::class, 'detail_user'])->name('rekap.detail_user');
     Route::get('rekap/load_detail_user', [RekapController::class, 'load_detail_user'])->name('rekap.load_detail_user');
+    Route::get('rekap/load_perbaikan_per_pengajuan', [RekapController::class, 'load_perbaikan_per_pengajuan'])->name('rekap.load_perbaikan_per_pengajuan');
+    Route::get('rekap/load_detail_user_perbulan', [RekapController::class, 'load_detail_user_perbulan'])->name('rekap.load_detail_user_perbulan');
     Route::get('rekap/load_rekap_user', [RekapController::class, 'load_rekap_user'])->name('rekap.load_rekap_user');
     Route::get('cuti/detail_user', [CutiController::class, 'detail_user'])->name('cuti.detail_user');
     Route::get('cuti/load_detail', [CutiController::class, 'load_detail'])->name('cuti.load_detail');

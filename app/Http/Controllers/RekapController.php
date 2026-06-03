@@ -173,4 +173,44 @@ class RekapController extends Controller
     
         return DataTables::of($datas)->make(true);
     }
+
+    public function load_perbaikan_per_pengajuan(Request $request){
+        $datas = DB::table('perbaikan_absen as a')
+            ->leftJoin('absen as b', 'a.absen_id', '=', 'b.id')
+            ->leftJoin('users as c', 'c.id', '=', 'a.user_id')
+            ->select(
+                'a.uuid',
+                'a.created_at',
+                'b.tanggal_masuk',
+                'c.name as nama',
+                'a.tipe_absen',
+                'a.tipe_perbaikan',
+                'a.jam_sebelumnya',
+                'a.jarak_sebelumnya',
+                'a.alasan',
+                'a.link_surat_tugas',
+                'a.keterangan_pic',
+                'a.disetujui'
+            )
+            ->whereNull('a.deleted_at');
+
+        if (isset($request->tahun)) {
+            $datas = $datas->whereYear('b.tanggal_masuk', $request->tahun);
+        }
+
+        if (isset($request->bulan)) {
+            $datas = $datas->whereMonth('b.tanggal_masuk', $request->bulan);
+        }
+
+        $datas = $datas->orderBy('a.created_at', 'desc')
+            ->orderBy('a.disetujui');
+        
+        $datas = $datas->get();
+    
+        return DataTables::of($datas)->make(true);
+    }
+
+    public function load_detail_user_perbulan(Request $request){
+        return $this->load_perbaikan_per_pengajuan($request);
+    }
 }

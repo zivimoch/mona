@@ -526,6 +526,8 @@ class DatabaseSeeder extends Seeder
         //     // 'catatan_pulang ' => NULL,
         //     ]
         // ];
-        // Absen::insert($absen);
+            // Absen::insert($absen);
+
+            $this->call(PerbaikanAbsenSeeder::class);
     }
 }

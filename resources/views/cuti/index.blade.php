@@ -27,7 +27,7 @@
             <th>Nama Petugas</th>
             <th>Tanggal Cuti</th>
             <th>Jumlah Hari Yang Diajukan</th>
-            <th>Sisa Cuti Sebelumnya</th>
+            <th>Sisa Cuti Tersedia</th>
             <th>Alasan Cuti</th>
             <th>Alamat Selama Cuti</th>
             <th>Tanggal Diajukan</th>
@@ -42,7 +42,7 @@
             <th>Nama Petugas</th>
             <th>Tanggal Cuti</th>
             <th>Jumlah Hari Yang Diajukan</th>
-            <th>Sisa Cuti Sebelumnya</th>
+            <th>Sisa Cuti Tersedia</th>
             <th>Alasan Cuti</th>
             <th>Alamat Selama Cuti</th>
             <th>Tanggal Diajukan</th>

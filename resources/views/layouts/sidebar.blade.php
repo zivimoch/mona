@@ -63,9 +63,15 @@
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a href="{{ route('absen.perbaikan_per_pengajuan') }}" class="nav-link">
+                    <i class="far fa-circle nav-icon"></i>
+                    <p>Perbaikan Absen (Per pengajuan)</p>
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a href="{{ route('absen.perbaikan') }}" class="nav-link">
                     <i class="far fa-circle nav-icon"></i>
-                    <p>Perbaikan Absen</p>
+                    <p>Perbaikan Absen (Per absen)</p>
                     </a>
                 </li>
                 </ul>

@@ -207,8 +207,8 @@ class CutiController extends Controller
                     ->first();
         // jika sudah disetujui pemohon dan atasan maka otomatis disetujui kasubagTU dan kepala
         if ($data->tandatangan1 && $data->tandatangan2) {
-            $datas['tandatangan3'] = 'buyuni.png';
-            $datas['nama_penandatangan3'] = 'Yuni';
+            $datas['tandatangan3'] = 'bunur.png';
+            $datas['nama_penandatangan3'] = 'Nurhayati';
             $datas['tandatangan4'] = 'buayu.png';
             $datas['nama_penandatangan4'] = 'Rahayu Sri Rahmawati';
             Cuti::updateOrCreate(['uuid' => $data->uuid], $datas);
