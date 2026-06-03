@@ -241,6 +241,14 @@
         $('#selectedCount').html(selectedUuids.length);
     }
 
+    function refreshTableKeepPage() {
+        if ($.fn.DataTable.isDataTable('#tabelRekap')) {
+            $('#tabelRekap').DataTable().ajax.reload(null, false);
+        } else {
+            load_data();
+        }
+    }
+
     function load_data() {
         $('#filters').modal('hide');
         selectedUuids = [];
@@ -429,7 +437,7 @@
                 success: function (response) {
                     selectedUuids = [];
                     $('#checkAllPerbaikan').prop('checked', false);
-                    load_data();
+                    refreshTableKeepPage();
                     Swal.fire({
                         icon: "success",
                         title: "Berhasil",
@@ -531,7 +539,7 @@
                     },
                     success: function (response){
                         $('#perbaikan').modal('hide');
-                        load_data();
+                        refreshTableKeepPage();
                         Swal.fire({
                             icon: "success",
                             title: "Berhasil di simpan",
