@@ -295,5 +295,11 @@ href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
             $("#error-message").show();
         }
     })
+
+    $('#form-submit').on('submit', function() {
+        $('#signature641, #signature642, #signature643, #signature644').each(function() {
+            $(this).val($(this).val().replace(/^data:image\/png;base64,/, ''));
+        });
+    });
 </script>
 </body>

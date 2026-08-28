@@ -180,6 +180,7 @@ class CutiController extends Controller
                     ->whereYear('a.tanggal_masuk', $request->tahun)
                     ->whereMonth('a.tanggal_masuk', $request->bulan)
                     ->where('a.kategori', 'cuti')
+                    ->whereNull('a.deleted_at')
                     ->selectRaw('b.uuid, b.name, b.email, b.jabatan, count(a.id) as jumlah_cuti')
                     ->groupBy('b.id', 'b.uuid', 'b.name', 'b.email', 'b.jabatan');
 
@@ -228,64 +229,36 @@ class CutiController extends Controller
                 }
                 $data = [];
 
-                if (isset($request->tandatangan1)) {
-                    //simpan tandatangan 1 atasan
-                    $folderPath1 = public_path('img/tandatangan/ttd_cuti/');
-                    $image_parts1 = explode(";base64,", $request->tandatangan1);
-                    $image_type_aux1 = explode("image/", $image_parts1[0]);
-                    $image_type1 = $image_type_aux1[1];
-                    $image_base641 = base64_decode($image_parts1[1]);
-                    $file1 = uniqid() . '.'.$image_type1;
-                    $filepath1 = $folderPath1 . $file1;
-                    file_put_contents($filepath1, $image_base641);
+                for ($i = 1; $i <= 4; $i++) {
+                    $signature = $request->{'tandatangan' . $i};
 
-                    $data['tandatangan1'] = $file1;
-                    $data['nama_penandatangan1'] = $request->nama_penandatangan1;
-                }
-                
-                if (isset($request->tandatangan2)) {
-                    //simpan tandatangan 2 pegawai
-                    $folderPath2 = public_path('img/tandatangan/ttd_cuti/');
-                    $image_parts2 = explode(";base64,", $request->tandatangan2);
-                    $image_type_aux2 = explode("image/", $image_parts2[0]);
-                    $image_type2 = $image_type_aux2[1];
-                    $image_base642 = base64_decode($image_parts2[1]);
-                    $file2 = uniqid() . '.'.$image_type2;
-                    $filepath2 = $folderPath2 . $file2;
-                    file_put_contents($filepath2, $image_base642);
+                    if (!$signature) {
+                        continue;
+                    }
 
-                    $data['tandatangan2'] = $file2;
-                    $data['nama_penandatangan2'] = $request->nama_penandatangan2;
-                }
-                
-                if (isset($request->tandatangan3)) {
-                    //simpan tandatangan 3 kasubbag
-                    $folderPath3 = public_path('img/tandatangan/ttd_cuti/');
-                    $image_parts3 = explode(";base64,", $request->tandatangan3);
-                    $image_type_aux3 = explode("image/", $image_parts3[0]);
-                    $image_type3 = $image_type_aux3[1];
-                    $image_base643 = base64_decode($image_parts3[1]);
-                    $file3 = uniqid() . '.'.$image_type3;
-                    $filepath3 = $folderPath3 . $file3;
-                    file_put_contents($filepath3, $image_base643);
+                    $imageParts = explode(';base64,', $signature, 2);
+                    $imageType = 'png';
+                    $encodedImage = $signature;
 
-                    $data['tandatangan3'] = $file3;
-                    $data['nama_penandatangan3'] = $request->nama_penandatangan3;
-                }
-                
-                if (isset($request->tandatangan4)) {
-                    //simpan tandatangan 4 kepala
-                    $folderPath4 = public_path('img/tandatangan/ttd_cuti/');
-                    $image_parts4 = explode(";base64,", $request->tandatangan4);
-                    $image_type_aux4 = explode("image/", $image_parts4[0]);
-                    $image_type4 = $image_type_aux4[1];
-                    $image_base644 = base64_decode($image_parts4[1]);
-                    $file4 = uniqid() . '.'.$image_type4;
-                    $filepath4 = $folderPath4 . $file4;
-                    file_put_contents($filepath4, $image_base644);
+                    // Tetap menerima format data URI lama selama masa transisi.
+                    if (count($imageParts) === 2) {
+                        $imageTypeParts = explode('image/', $imageParts[0]);
+                        $imageType = $imageTypeParts[1] ?? 'png';
+                        $encodedImage = $imageParts[1];
+                    }
 
-                    $data['tandatangan4'] = $file4;
-                    $data['nama_penandatangan4'] = $request->nama_penandatangan4;
+                    $decodedImage = base64_decode($encodedImage, true);
+
+                    if ($decodedImage === false) {
+                        throw new Exception('Format tanda tangan tidak valid.');
+                    }
+
+                    $file = uniqid() . '.' . $imageType;
+                    $filePath = public_path('img/tandatangan/ttd_cuti/' . $file);
+                    file_put_contents($filePath, $decodedImage);
+
+                    $data['tandatangan' . $i] = $file;
+                    $data['nama_penandatangan' . $i] = $request->{'nama_penandatangan' . $i};
                 }
                 
             $proses = Cuti::updateOrCreate(['uuid' => $request->uuid], $data);

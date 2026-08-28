@@ -282,19 +282,23 @@
                     $(this).prop('checked', selectedUuids.indexOf($(this).val()) !== -1);
                 });
 
-                const totalCheckbox = $('.perbaikan-checkbox').length;
-                const totalChecked = $('.perbaikan-checkbox:checked').length;
+                const totalCheckbox = $('.perbaikan-checkbox:not(:disabled)').length;
+                const totalChecked = $('.perbaikan-checkbox:not(:disabled):checked').length;
                 $('#checkAllPerbaikan').prop('checked', totalCheckbox > 0 && totalCheckbox == totalChecked);
                 updateSelectedCount();
             },
             "columns": [
                 {
-                    "data": "uuid",
+                    "data": null,
                     "orderable": false,
                     "searchable": false,
-                    "render": function (data) {
-                        const checked = selectedUuids.indexOf(data) !== -1 ? 'checked' : '';
-                        return '<input type="checkbox" class="perbaikan-checkbox" value="'+data+'" '+checked+'>';
+                    "render": function (data, type, row) {
+                        if (row.disetujui !== null) {
+                            return '<input type="checkbox" class="perbaikan-checkbox" value="'+row.uuid+'" disabled>';
+                        }
+
+                        const checked = selectedUuids.indexOf(row.uuid) !== -1 ? 'checked' : '';
+                        return '<input type="checkbox" class="perbaikan-checkbox" value="'+row.uuid+'" '+checked+'>';
                     }
                 },
                 {
@@ -327,7 +331,7 @@
                     "data": "link_surat_tugas",
                     "render": function (data) {
                         if (!data) return '-';
-                        return '<a href="'+data+'" target="_blank">Lihat Surat</a>';
+                        return '<a href="'+data+'" target="_blank">'+data+'</a>';
                     }
                 },
                 {
@@ -371,8 +375,8 @@
                 removeSelectedUuid($(this).val());
             }
 
-            const totalCheckbox = $('.perbaikan-checkbox').length;
-            const totalChecked = $('.perbaikan-checkbox:checked').length;
+            const totalCheckbox = $('.perbaikan-checkbox:not(:disabled)').length;
+            const totalChecked = $('.perbaikan-checkbox:not(:disabled):checked').length;
             $('#checkAllPerbaikan').prop('checked', totalCheckbox > 0 && totalCheckbox == totalChecked);
             updateSelectedCount();
         });
@@ -381,7 +385,7 @@
     $('#checkAllPerbaikan').change(function () {
         const checked = $(this).is(':checked');
 
-        $('.perbaikan-checkbox').each(function () {
+        $('.perbaikan-checkbox:not(:disabled)').each(function () {
             $(this).prop('checked', checked);
             if (checked) {
                 addSelectedUuid($(this).val());

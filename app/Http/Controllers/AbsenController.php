@@ -433,12 +433,15 @@ class AbsenController extends Controller
     }
 
     public function bulk_setujui_perbaikan(Request $request)
-    {
+{
+    try {
+
         if (Auth::user()->jabatan != 'Sekretariat') {
             abort(403, 'Unauthorized action.');
         }
 
         $uuids = $request->uuids;
+
         if (!is_array($uuids) || count($uuids) == 0) {
             return response()->json([
                 'success' => false,
@@ -446,17 +449,33 @@ class AbsenController extends Controller
             ], 422);
         }
 
+        DB::beginTransaction();
+
         $perbaikans = PerbaikanAbsen::whereIn('uuid', $uuids)
             ->whereNull('deleted_at')
+            // ->whereNull('disetujui')
             ->get();
 
+        if ($perbaikans->isEmpty()) {
+            throw new Exception('Data perbaikan tidak ditemukan atau sudah diproses.');
+        }
+
         foreach ($perbaikans as $perbaikan) {
-            $this->applyPersetujuanPerbaikan($perbaikan, 1);
+
+            // jalankan logic approval
+            $this->applyPersetujuanPerbaikan(
+                $perbaikan,
+                1
+            );
+
+            // update approval
             $perbaikan->update([
                 'disetujui' => 1,
-                'keterangan_pic' => $request->keterangan_pic ?? $perbaikan->keterangan_pic,
+                'keterangan_pic' => $request->keterangan_pic
             ]);
         }
+
+        DB::commit();
 
         return response()->json([
             'success' => true,
@@ -464,7 +483,18 @@ class AbsenController extends Controller
             'total' => $perbaikans->count(),
             'message' => $perbaikans->count().' pengajuan berhasil disetujui.'
         ]);
+
+    } catch (Exception $e) {
+
+        DB::rollBack();
+
+        return response()->json([
+            'success' => false,
+            'message' => $e->getMessage()
+        ], 500);
+
     }
+}
 
     private function applyPersetujuanPerbaikan($perbaikan, $disetujui): void
     {
